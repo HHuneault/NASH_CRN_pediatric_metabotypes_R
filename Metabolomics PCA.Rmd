@@ -1,0 +1,194 @@
+---
+title: "Metabolomics PCA"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+# HILIC identify outliers based on components 1-5 
+
+library(mdatools)
+library(pcv)
+
+
+data <- read.csv("data_normalized_HILIC_all studies_514_Oct17 _USE_w phenotype label.csv", header = TRUE)
+
+# Separate phenotype labels (cluster) from the data
+phenotype_labels <- as.vector(data[1, -1])  # First row contains phenotype labels (IF, EM, ALSP)
+feature_names <- data[-1, 1]  # First column contains feature names (mz_rt)
+
+# Extract the numeric data (excluding the first row for cluster and the first column for mz_rt)
+numeric_data <- data[-1, -1]  # Remove the first row and first column
+
+# Transpose the data so that samples are rows and features are columns
+transposed_data <- t(numeric_data)
+
+# Assign feature names as column names and sample names as row names
+colnames(transposed_data) <- feature_names
+rownames(transposed_data) <- colnames(data)[-1]  # Sample names
+
+# Convert transposed data to numeric
+transposed_data_numeric <- apply(transposed_data, 2, as.numeric)
+
+# Perform PCA on the transposed data, retaining 10 components
+m <- pca(transposed_data_numeric, 10, scale = FALSE, info = "PCA")
+m <- selectCompNum(m, 10)
+
+# Identify outliers based on components 1 to 5
+scores_all <- as.matrix(m$res$cal$scores)  # Extract scores for all components
+n <- nrow(scores_all)  # Number of samples
+p <- 5  # Now using components 1 to 5 for outlier detection
+
+# Standardize the scores for components 1 to 5
+standardized_scores <- sweep(scores_all[, 1:5], 2, apply(scores_all[, 1:5], 2, sd), FUN = "/")
+
+# Calculate the squared Mahalanobis distance (Hotelling's T² statistic) for components 1 to 5
+distances_components_1_5 <- rowSums(standardized_scores^2)
+
+# Calculate the Hotelling's T² limit (95% confidence interval)
+t2_limit_1_5 <- qf(0.99, p, n - p) * (p * (n - 1)) / (n - p)
+
+# Identify outliers based on the Hotelling's T² statistic for components 1 to 5
+outliers_1_5 <- which(distances_components_1_5 > t2_limit_1_5)
+
+# Print the outliers for components 1 to 5
+cat("Outliers identified from PCA for components 1 to 5: \n")
+print(rownames(transposed_data)[outliers_1_5])  # Sample names
+cat("Number of outliers from PCA for components 1 to 5: ", length(outliers_1_5), "\n")
+```
+
+
+```{r}
+# C18 identify outliers based on compents 1-5 
+
+
+# Load the dataset in R
+data <- read.csv("data_normalized_C18_all studies_514_Oct17 _USE_w phenotype label.csv", header = TRUE)
+
+# Separate phenotype labels (cluster) from the data
+phenotype_labels <- as.vector(data[1, -1])  # First row contains phenotype labels (IF, EM, ALSP)
+feature_names <- data[-1, 1]  # First column contains feature names (mz_rt)
+
+# Extract the numeric data (excluding the first row for cluster and the first column for mz_rt)
+numeric_data <- data[-1, -1]  # Remove the first row and first column
+
+# Transpose the data so that samples are rows and features are columns
+transposed_data <- t(numeric_data)
+
+# Assign feature names as column names and sample names as row names
+colnames(transposed_data) <- feature_names
+rownames(transposed_data) <- colnames(data)[-1]  # Sample names
+
+# Convert transposed data to numeric
+transposed_data_numeric <- apply(transposed_data, 2, as.numeric)
+
+# Perform PCA on the transposed data, retaining 10 components
+m <- pca(transposed_data_numeric, 10, scale = FALSE, info = "PCA")
+m <- selectCompNum(m, 10)
+
+# Identify outliers based on components 1 to 5
+scores_all <- as.matrix(m$res$cal$scores)  # Extract scores for all components
+n <- nrow(scores_all)  # Number of samples
+p <- 5  # Now using components 1 to 5 for outlier detection
+
+# Standardize the scores for components 1 to 5
+standardized_scores <- sweep(scores_all[, 1:5], 2, apply(scores_all[, 1:5], 2, sd), FUN = "/")
+
+# Calculate the squared Mahalanobis distance (Hotelling's T² statistic) for components 1 to 5
+distances_components_1_5 <- rowSums(standardized_scores^2)
+
+# Calculate the Hotelling's T² limit (95% confidence interval)
+t2_limit_1_5 <- qf(0.99, p, n - p) * (p * (n - 1)) / (n - p)
+
+# Identify outliers based on the Hotelling's T² statistic for components 1 to 5
+outliers_1_5 <- which(distances_components_1_5 > t2_limit_1_5)
+
+# Print the outliers for components 1 to 5
+cat("Outliers identified from PCA for components 1 to 5: \n")
+print(rownames(transposed_data)[outliers_1_5])  # Sample names
+cat("Number of outliers from PCA for components 1 to 5: ", length(outliers_1_5), "\n")
+
+```
+
+```{r}
+
+## updated with plots using components 1-5 - c18
+
+
+
+# Load the dataset in R
+data <- read.csv("data_normalized_C18_all studies_514_Oct17 _USE_w phenotype label.csv", header = TRUE)
+
+# Separate phenotype labels (cluster) from the data
+phenotype_labels <- as.vector(data[1, -1])  # First row contains phenotype labels (IF, EM, ALSP)
+feature_names <- data[-1, 1]  # First column contains feature names (mz_rt)
+
+# Extract the numeric data (excluding the first row for cluster and the first column for mz_rt)
+numeric_data <- data[-1, -1]  # Remove the first row and first column
+
+# Transpose the data so that samples are rows and features are columns
+transposed_data <- t(numeric_data)
+
+# Assign feature names as column names and sample names as row names
+colnames(transposed_data) <- feature_names
+rownames(transposed_data) <- colnames(data)[-1]  # Sample names
+
+# Convert transposed data to numeric
+transposed_data_numeric <- apply(transposed_data, 2, as.numeric)
+
+# Perform PCA on the transposed data, retaining 10 components
+m <- pca(transposed_data_numeric, 10, scale = FALSE, info = "PCA")
+m <- selectCompNum(m, 10)
+
+# Identify outliers based on components 1 to 5
+scores_all <- as.matrix(m$res$cal$scores)  # Extract scores for all components
+n <- nrow(scores_all)  # Number of samples
+p <- 5  # Now using components 1 to 5 for outlier detection
+
+# Standardize the scores for components 1 to 5
+standardized_scores <- sweep(scores_all[, 1:5], 2, apply(scores_all[, 1:5], 2, sd), FUN = "/")
+
+# Calculate the squared Mahalanobis distance (Hotelling's T² statistic) for components 1 to 5
+distances_components_1_5 <- rowSums(standardized_scores^2)
+
+# Calculate the Hotelling's T² limit (95% confidence interval)
+t2_limit_1_5 <- qf(0.99, p, n - p) * (p * (n - 1)) / (n - p)
+
+# Identify outliers based on the Hotelling's T² statistic for components 1 to 5
+outliers_1_5 <- which(distances_components_1_5 > t2_limit_1_5)
+
+# Print the outliers for components 1 to 5
+cat("Outliers identified from PCA for components 1 to 5: \n")
+print(rownames(transposed_data)[outliers_1_5])  # Sample names
+cat("Number of outliers from PCA for components 1 to 5: ", length(outliers_1_5), "\n")
+
+# ---- Add plots ----
+
+# Set up plotting area for 2x2 layout
+par(mfrow = c(2, 2))
+
+# Plot PCA scores for components 1 and 3, with labels based on the phenotype
+g1 <- factor(phenotype_labels, levels = c("IF", "EM", "ALSP"))  # Replace with your phenotype labels
+p <- plotScores(m$res$cal, c(1, 3), show.labels = TRUE, cgroup = g1, xlim = c(-20, 20), ylim = c(-25, 30))
+
+# Add Hotelling's T² ellipse to the plot
+plotHotellingEllipse(p, conf.lim = 0.95, col = "red")
+
+# Plot loadings (to show variable contributions)
+mdaplot(m$loadings, type = "p", show.labels = TRUE, show.lines = c(0, 0))
+
+# Plot residuals (to detect potential outliers)
+plotResiduals(m, show.labels = TRUE, lim.col = c("red", "orange"), lim.lwd = c(2, 2), lim.lty = c(1, 2))
+
+# Plot variance explained by each component
+par(mfrow = c(1, 1))  # Reset plotting area for variance plot
+plotVariance(m$res$cal, type = "h", show.labels = TRUE, labels = "values")
+
+# Reset plotting area to default
+par(mfrow = c(1, 1))
+
+```
+
+
+
