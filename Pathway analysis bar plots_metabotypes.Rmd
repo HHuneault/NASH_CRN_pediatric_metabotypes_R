@@ -1,0 +1,65 @@
+---
+title: "Pathway analysis bar plots"
+output: html_document
+date: "2024-12-30"
+editor_options: 
+  chunk_output_type: console
+---
+
+   
+```{r}
+
+
+path <- read.csv ("C:/Users/hhuneau/OneDrive - Emory University/Desktop/NRSG 736/EM vs ALSBP pathways for bar plot1.csv")
+
+path <- read.csv ("C:/Users/hhuneau/OneDrive - Emory University/Desktop/NRSG 736/IF vs ALSBP pathways for bar plot.csv")
+
+path <- read.csv ("C:/Users/hhuneau/OneDrive - Emory University/Desktop/NRSG 736/IF vs EM for pathways bar plots1.csv")
+
+
+path <- read.csv ("C:/Users/hhuneau/OneDrive - Emory University/Desktop/NRSG 736/MiXED signifiant pathways outliers removed Oct 25_noAA.csv")
+
+```
+   
+   
+
+  
+
+ 
+```{r}
+# Load necessary libraries
+library(dplyr)
+library(ggplot2)
+
+# Prepare data with pathway labels and neglogpvalue
+pathg <- path %>%
+  mutate(Pathways = paste0(pathway, " (", overlap_size, "/", pathway_size, ")")) %>%
+  mutate(neglogpvalue = -log10(p.value))  # Correct log scaling
+
+# Create bar plot of pathways by p-value with enhanced aesthetics and distinct grey coloring by "Mode"
+pathfig <- ggplot(pathg, aes(x = reorder(Pathways, neglogpvalue), y = neglogpvalue, fill = Mode)) +
+  geom_bar(stat = "identity", color = "black", width = 0.8) +  # Outline bars in black
+  coord_flip() +
+  scale_x_discrete(name = "Pathways") +  # Label x-axis with "Pathways" for clarity
+  ylab(expression(-log[10](p ~ "value"))) +  # Refine label for mathematical clarity
+  geom_hline(yintercept = -log10(0.05), linetype = "dashed", color = "red", size = 1) +  # Highlight significance threshold
+  theme_minimal(base_size = 14) +  # Clean theme for publication
+  theme(
+    axis.text.x = element_text(face = "bold", size = 20, color = "black"),
+    axis.text.y = element_text(face = "bold", size = 20, color = "black"),  # Larger, bold pathway labels
+    axis.title.x = element_text(face = "bold", size = 20),
+    axis.title.y = element_text(face = "bold", size = 20),
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 18),
+    panel.grid.major = element_blank(),  # Remove major grid lines for cleaner look
+    panel.grid.minor = element_blank()   # Remove minor grid lines
+  ) +
+  labs(title = "Pathway Enrichment Analysis") +
+  scale_fill_manual(values = c("HILIC+" = "grey70", "C18-" = "grey40"))  # Distinct grey shades for modes
+
+# Show plot
+pathfig
+
+
+
+```
+ 
