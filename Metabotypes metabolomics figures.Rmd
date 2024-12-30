@@ -1,0 +1,1229 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+title: "boxplots pathways"
+output: html_document
+date: "2024-10-30"
+editor_options: 
+  chunk_output_type: console
+---
+
+
+```{r}
+# Load necessary libraries
+library(ggplot2)
+library(reshape2)
+library(pheatmap)
+
+
+# Load the data
+data <- read.csv("C:/Users/hhuneau/OneDrive - Emory University/Desktop/NRSG 736/tryptophan untransformed.csv", check.names = FALSE) # Adjust path and sheet if necessary
+
+# Remove 'ID' column and calculate the mean for each metabolite within each cluster
+data_grouped <- aggregate(. ~ cluster, data = data[,-1], FUN = mean)
+
+# Set the row names to be clusters and remove the cluster column for heatmap
+rownames(data_grouped) <- data_grouped$cluster
+data_grouped$cluster <- NULL
+
+# Scale data to have a mean of 0 and standard deviation of 1
+data_grouped_scaled <- scale(data_grouped)
+
+# Transpose the data to make the heatmap vertical
+data_grouped_scaled <- t(data_grouped_scaled)
+
+# Set the color scale to span -1 to +1
+breaks <- seq(-1, 1, length.out = 100)
+
+# Plot the heatmap with vertical layout and no angled column names
+pheatmap(data_grouped_scaled, 
+         color = colorRampPalette(c("darkblue", "white", "red"))(100),
+         breaks = breaks,
+         clustering_distance_rows = "euclidean",
+         clustering_distance_cols = "euclidean",
+         clustering_method = "complete",
+         main = " ",
+         border_color = NA,
+         angle_col = 0,               # No angle for column names
+         fontsize_row = 12,           # Font size for row labels
+         fontsize_col = 10,           # Font size for column labels
+         cellwidth = 60,              # Cell width
+         cellheight = 60,             # Cell height
+         display_numbers = FALSE,     # Remove display numbers if not needed
+         margins = c(12, 12)          # Margins for space around labels
+)
+
+
+```
+
+```{r}
+# Load necessary libraries
+library(ggpubr)
+library(readr)
+
+
+data <- read.csv ("C:/Users/hhuneau/OneDrive - Emory University/Desktop/NRSG 736/tryptophan untransformed.csv", check.names = FALSE) # Adjust path and sheet if necessary
+
+
+
+
+# Keep a list of original feature names (excluding ID and cluster columns)
+original_feature_names <- names(data)[3:ncol(data)]
+
+# Clean the data by renaming columns to be syntactically valid
+cleaned_data <- data %>%
+  rename_with(~ make.names(.))
+
+# Convert the 'cluster' variable to a factor with the desired order
+cleaned_data$cluster <- factor(cleaned_data$cluster, levels = c("IF", "ALSBP", "EM"))
+
+# List of cleaned metabolite feature names
+cleaned_feature_names <- names(cleaned_data)[3:ncol(cleaned_data)]
+
+# Define custom colors for clusters
+custom_colors <- c("IF" = "#FFA500", "ALSBP" = "#1E90FF", "EM" = "#228B22")
+
+# Store plots in a list
+plots <- list()
+
+# Loop over each metabolite feature to generate box plots without titles
+for (i in seq_along(cleaned_feature_names)) {
+  feature <- cleaned_feature_names[i]
+  original_feature <- original_feature_names[i]
+  
+  # Generate the box plot with pairwise comparison p-values
+  p <- ggboxplot(cleaned_data, x = "cluster", y = feature, 
+                 color = "cluster",         # Outline color by cluster
+                 fill = "white",             # Transparent fill
+                 palette = custom_colors,    # Use custom colors for outlines
+                 add = "jitter") +
+    stat_compare_means(comparisons = list(c("IF", "ALSBP"), c("IF", "EM"), c("ALSBP", "EM")),
+                       label = "p.format",    # Use p.format for exact p-values
+                       method = "t.test") +
+    labs(x = " ", y = original_feature) +  # Label only the axes, no title
+    theme(
+      legend.position = "none",                  # Hide legend if not needed
+      axis.title.y = element_text(size = 9)      # Smaller font size for y-axis label (metabolite name)
+    )
+  
+  # Add plot to list
+  plots[[i]] <- p
+}
+
+
+# Arrange all plots in a grid
+ggarrange(plotlist = plots, ncol = 3, nrow = ceiling(length(plots) / 3))
+
+
+
+```
+
+```{r}
+library(ggpubr)
+library(readr)
+library(dplyr)
+
+# Load the data
+data <- read.csv("C:/Users/hhuneau/OneDrive - Emory University/Desktop/NRSG 736/tryptophan untransformed.csv", check.names = FALSE)
+
+# Keep a list of original feature names (excluding ID and cluster columns)
+original_feature_names <- names(data)[3:ncol(data)]
+
+# Clean the data by renaming columns to be syntactically valid
+cleaned_data <- data %>%
+  rename_with(~ make.names(.))
+
+# Convert the 'cluster' variable to a factor with the desired order
+cleaned_data$cluster <- factor(cleaned_data$cluster, levels = c("IF", "ALSBP", "EM"))
+
+# List of cleaned metabolite feature names
+cleaned_feature_names <- names(cleaned_data)[3:ncol(cleaned_data)]
+
+# Define custom colors for clusters
+custom_colors <- c("IF" = "#FFA500", "ALSBP" = "#1E90FF", "EM" = "#228B22")
+
+# Store plots in a list
+plots <- list()
+
+# Loop over each metabolite feature to generate violin plots with extended median lines
+for (i in seq_along(cleaned_feature_names)) {
+  feature <- cleaned_feature_names[i]
+  original_feature <- original_feature_names[i]
+  
+  # Calculate medians for each cluster
+  medians <- cleaned_data %>%
+    group_by(cluster) %>%
+    dplyr::summarize(median_value = median(.data[[feature]], na.rm = TRUE))
+  
+  # Generate the violin plot with pairwise comparison p-values and extended median lines
+  p <- ggviolin(cleaned_data, x = "cluster", y = feature, 
+                color = "cluster",         # Outline color by cluster
+                fill = "white",            # White fill for no middle color
+                palette = custom_colors,   # Use custom colors
+                add = "jitter",            # Add jittered points
+                alpha = 1) +               # Opaque outline
+    geom_segment(data = medians, aes(x = as.numeric(cluster) - 0.4, 
+                                     xend = as.numeric(cluster) + 0.4, 
+                                     y = median_value, 
+                                     yend = median_value),
+                 color = "black", size = 0.8) +  # Add a black line for the median
+    stat_compare_means(comparisons = list(c("IF", "ALSBP"), c("IF", "EM"), c("ALSBP", "EM")),
+                       label = "p.format",    # Use p.format for exact p-values
+                       method = "wilcox.test") +
+    labs(x = " ", y = original_feature) +  # Label only the axes, no title
+    theme(
+      legend.position = "none",                  # Hide legend if not needed
+      axis.title.y = element_text(size = 11)      # Smaller font size for y-axis label (metabolite name)
+    )
+  
+  # Add plot to list
+  plots[[i]] <- p
+}
+
+# Arrange all plots in a grid
+ggarrange(plotlist = plots, ncol = 3, nrow = ceiling(length(plots) / 3))
+
+```
+
+
+
+
+```{r}
+# Load necessary libraries
+library(ggplot2)
+library(reshape2)
+library(pheatmap)
+
+# Load the data
+
+
+
+data <- read.csv ("C:/Users/hhuneau/OneDrive - Emory University/Desktop/NRSG 736/purine untransformed.csv", check.names = FALSE) # Adjust path and sheet if necessary
+
+# Remove 'ID' column and calculate the mean for each metabolite within each cluster
+data_grouped <- aggregate(. ~ cluster, data = data[,-1], FUN = mean)
+
+# Set the row names to be clusters and remove the cluster column for heatmap
+rownames(data_grouped) <- data_grouped$cluster
+data_grouped$cluster <- NULL
+
+# Scale data to have a mean of 0 and standard deviation of 1
+data_grouped_scaled <- scale(data_grouped)
+
+# Transpose the data to make the heatmap vertical
+data_grouped_scaled <- t(data_grouped_scaled)
+
+# Set the color scale to span -1 to +1
+breaks <- seq(-1, 1, length.out = 100)
+
+# Plot the heatmap with vertical layout and no angled column names
+pheatmap(data_grouped_scaled, 
+         color = colorRampPalette(c("darkblue", "white", "red"))(100),
+         breaks = breaks,
+         clustering_distance_rows = "euclidean",
+         clustering_distance_cols = "euclidean",
+         clustering_method = "complete",
+         main = " ",
+         border_color = NA,
+         angle_col = 0,               # No angle for column names
+         fontsize_row = 12,           # Font size for row labels
+         fontsize_col = 10,           # Font size for column labels
+         cellwidth = 60,              # Cell width
+         cellheight = 60,             # Cell height
+         display_numbers = FALSE,     # Remove display numbers if not needed
+         margins = c(12, 12)          # Margins for space around labels
+)
+
+```
+
+```{r}
+# Load necessary libraries
+library(ggpubr)
+library(readr)
+
+
+
+#data <- read.csv ("C:/Users/hhuneau/OneDrive - Emory University/Desktop/NRSG 736/purine untransformed.csv", check.names = FALSE) # Adjust path and sheet if necessary
+
+data <- read.csv ("C:/Users/hhuneau/OneDrive - Emory University/Desktop/NRSG 736/top3 anova HILIC.csv", check.names = FALSE) # Adjust path and sheet if necessary
+
+#data <- read.csv ("C:/Users/hhuneau/OneDrive - Emory University/Desktop/NRSG 736/top 3 C18 anova named.csv", check.names = FALSE) # Adjust path and sheet if necessary
+
+
+# Keep a list of original feature names (excluding ID and cluster columns)
+original_feature_names <- names(data)[3:ncol(data)]
+
+# Clean the data by renaming columns to be syntactically valid
+cleaned_data <- data %>%
+  rename_with(~ make.names(.))
+
+# Convert the 'cluster' variable to a factor with the desired order
+cleaned_data$cluster <- factor(cleaned_data$cluster, levels = c("IF", "ALSBP", "EM"))
+
+
+# List of cleaned metabolite feature names
+cleaned_feature_names <- names(cleaned_data)[3:ncol(cleaned_data)]
+
+# Define custom colors for clusters
+custom_colors <- c("IF" = "#FFA500", "ALSBP" = "#1E90FF", "EM" = "#228B22")
+
+# Store plots in a list
+plots <- list()
+
+for (i in seq_along(cleaned_feature_names)) {
+  feature <- cleaned_feature_names[i]
+  original_feature <- original_feature_names[i]
+  
+  
+  library(dplyr)
+  # Calculate medians for each cluster
+  medians <- cleaned_data %>%
+    group_by(cluster) %>%
+    dplyr::summarize(median_value = median(.data[[feature]], na.rm = TRUE))
+  
+  # Generate the violin plot with exact p-values
+  p <- ggviolin(cleaned_data, x = "cluster", y = feature, 
+                color = "cluster",         
+                fill = "white",            
+                palette = custom_colors,   
+                add = "jitter",            
+                alpha = 1) +               
+    geom_segment(data = medians, aes(x = as.numeric(cluster) - 0.4, 
+                                     xend = as.numeric(cluster) + 0.4, 
+                                     y = median_value, 
+                                     yend = median_value),
+                 color = "black", size = 0.8) +  
+    stat_compare_means(comparisons = list(c("IF", "ALSBP"), c("IF", "EM"), c("ALSBP", "EM")),
+                       label = "p.format",     # Display exact p-values
+                       method = "wilcox.test",
+                       method.args = list(exact = FALSE)) +  # Force numeric p-values
+    labs(x = " ", y = original_feature) +  
+    theme(
+      legend.position = "none",                  
+      axis.title.y = element_text(size = 11)      
+    )
+  
+  # Add plot to list
+  plots[[i]] <- p
+}
+
+# Arrange all plots in a grid
+ggarrange(plotlist = plots, ncol = 3, nrow = ceiling(length(plots) / 3))
+
+```
+
+
+```{r}
+# Load necessary libraries
+library(ggplot2)
+library(reshape2)
+library(pheatmap)
+
+# Load the data
+
+
+
+data <- read.csv ("C:/Users/hhuneau/OneDrive - Emory University/Desktop/NRSG 736/BCAA untransformed.csv", check.names = FALSE) # Adjust path and sheet if necessary
+
+
+
+# Remove 'ID' column and calculate the mean for each metabolite within each cluster
+data_grouped <- aggregate(. ~ cluster, data = data[,-1], FUN = mean)
+
+# Set the row names to be clusters and remove the cluster column for heatmap
+rownames(data_grouped) <- data_grouped$cluster
+data_grouped$cluster <- NULL
+
+# Scale data to have a mean of 0 and standard deviation of 1
+data_grouped_scaled <- scale(data_grouped)
+
+# Transpose the data to make the heatmap vertical
+data_grouped_scaled <- t(data_grouped_scaled)
+
+# Set the color scale to span -1 to +1
+breaks <- seq(-1, 1, length.out = 100)
+
+# Plot the heatmap with vertical layout and no angled column names
+pheatmap(data_grouped_scaled, 
+         color = colorRampPalette(c("darkblue", "white", "red"))(100),
+         breaks = breaks,
+         clustering_distance_rows = "euclidean",
+         clustering_distance_cols = "euclidean",
+         clustering_method = "complete",
+         main = " ",
+         border_color = NA,
+         angle_col = 0,               # No angle for column names
+         fontsize_row = 12,           # Font size for row labels
+         fontsize_col = 10,           # Font size for column labels
+         cellwidth = 60,              # Cell width
+         cellheight = 60,             # Cell height
+         display_numbers = FALSE,     # Remove display numbers if not needed
+         margins = c(12, 12)          # Margins for space around labels
+)
+```
+
+```{r}
+# Load necessary libraries
+library(ggpubr)
+library(readr)
+
+
+
+data <- read.csv ("C:/Users/hhuneau/OneDrive - Emory University/Desktop/NRSG 736/BCAA untransformed.csv", check.names = FALSE) # Adjust path and sheet if necessary
+
+
+# Keep a list of original feature names (excluding ID and cluster columns)
+original_feature_names <- names(data)[3:ncol(data)]
+
+# Clean the data by renaming columns to be syntactically valid
+cleaned_data <- data %>%
+  rename_with(~ make.names(.))
+
+# Convert the 'cluster' variable to a factor with the desired order
+cleaned_data$cluster <- factor(cleaned_data$cluster, levels = c("IF", "ALSBP", "EM"))
+
+
+# List of cleaned metabolite feature names
+cleaned_feature_names <- names(cleaned_data)[3:ncol(cleaned_data)]
+
+# Define custom colors for clusters
+custom_colors <- c("IF" = "#FFA500", "ALSBP" = "#1E90FF", "EM" = "#228B22")
+
+# Store plots in a list
+plots <- list()
+
+# Loop over each metabolite feature to generate violin plots with extended median lines
+for (i in seq_along(cleaned_feature_names)) {
+  feature <- cleaned_feature_names[i]
+  original_feature <- original_feature_names[i]
+  
+  # Calculate medians for each cluster
+  medians <- cleaned_data %>%
+    group_by(cluster) %>%
+    dplyr::summarize(median_value = median(.data[[feature]], na.rm = TRUE))
+  
+  # Generate the violin plot with pairwise comparison p-values and extended median lines
+  p <- ggviolin(cleaned_data, x = "cluster", y = feature, 
+                color = "cluster",         # Outline color by cluster
+                fill = "white",            # White fill for no middle color
+                palette = custom_colors,   # Use custom colors
+                add = "jitter",            # Add jittered points
+                alpha = 1) +               # Opaque outline
+    geom_segment(data = medians, aes(x = as.numeric(cluster) - 0.4, 
+                                     xend = as.numeric(cluster) + 0.4, 
+                                     y = median_value, 
+                                     yend = median_value),
+                 color = "black", size = 0.8) +  # Add a black line for the median
+    stat_compare_means(comparisons = list(c("IF", "ALSBP"), c("IF", "EM"), c("ALSBP", "EM")),
+                       label = "p.format",    # Use p.format for exact p-values
+                       method = "wilcox.test") +
+    labs(x = " ", y = original_feature) +  # Label only the axes, no title
+    theme(
+      legend.position = "none",                  # Hide legend if not needed
+      axis.title.y = element_text(size =11)      # Smaller font size for y-axis label (metabolite name)
+    )
+  
+  # Add plot to list
+  plots[[i]] <- p
+}
+
+# Arrange all plots in a grid
+ggarrange(plotlist = plots, ncol = 3, nrow = ceiling(length(plots) / 3))
+```
+
+
+```{r}
+# Load necessary libraries
+library(ggplot2)
+library(reshape2)
+library(pheatmap)
+
+# Load the data
+
+
+data <- read.csv("C:/Users/hhuneau/OneDrive - Emory University/Desktop/NRSG 736/pantothenate and CoA untransformed.csv", check.names = FALSE) 
+
+
+# Remove 'ID' column and calculate the mean for each metabolite within each cluster
+data_grouped <- aggregate(. ~ cluster, data = data[,-1], FUN = mean)
+
+# Set the row names to be clusters and remove the cluster column for heatmap
+rownames(data_grouped) <- data_grouped$cluster
+data_grouped$cluster <- NULL
+
+# Scale data to have a mean of 0 and standard deviation of 1
+data_grouped_scaled <- scale(data_grouped)
+
+# Transpose the data to make the heatmap vertical
+data_grouped_scaled <- t(data_grouped_scaled)
+
+# Set the color scale to span -1 to +1
+breaks <- seq(-1, 1, length.out = 100)
+
+# Plot the heatmap with vertical layout and no angled column names
+pheatmap(data_grouped_scaled, 
+         color = colorRampPalette(c("darkblue", "white", "red"))(100),
+         breaks = breaks,
+         clustering_distance_rows = "euclidean",
+         clustering_distance_cols = "euclidean",
+         clustering_method = "complete",
+         main = " ",
+         border_color = NA,
+         angle_col = 0,               # No angle for column names
+         fontsize_row = 12,           # Font size for row labels
+         fontsize_col = 10,           # Font size for column labels
+         cellwidth = 60,              # Cell width
+         cellheight = 60,             # Cell height
+         display_numbers = FALSE,     # Remove display numbers if not needed
+         margins = c(12, 12)          # Margins for space around labels
+)
+
+```
+
+```{r}
+# Load necessary libraries
+library(ggpubr)
+library(readr)
+
+
+
+data <- read.csv("C:/Users/hhuneau/OneDrive - Emory University/Desktop/NRSG 736/pantothenate and CoA untransformed.csv", check.names = FALSE) 
+
+
+
+# Keep a list of original feature names (excluding ID and cluster columns)
+original_feature_names <- names(data)[3:ncol(data)]
+
+# Clean the data by renaming columns to be syntactically valid
+cleaned_data <- data %>%
+  rename_with(~ make.names(.))
+
+# Convert the 'cluster' variable to a factor with the desired order
+cleaned_data$cluster <- factor(cleaned_data$cluster, levels = c("IF", "ALSBP", "EM"))
+
+
+# List of cleaned metabolite feature names
+cleaned_feature_names <- names(cleaned_data)[3:ncol(cleaned_data)]
+
+# Define custom colors for clusters
+custom_colors <- c("IF" = "#FFA500", "ALSBP" = "#1E90FF", "EM" = "#228B22")
+
+# Store plots in a list
+plots <- list()
+
+# Loop over each metabolite feature to generate violin plots with extended median lines
+for (i in seq_along(cleaned_feature_names)) {
+  feature <- cleaned_feature_names[i]
+  original_feature <- original_feature_names[i]
+  
+  # Calculate medians for each cluster
+  medians <- cleaned_data %>%
+    group_by(cluster) %>%
+    dplyr::summarize(median_value = median(.data[[feature]], na.rm = TRUE))
+  
+  # Generate the violin plot with pairwise comparison p-values and extended median lines
+  p <- ggviolin(cleaned_data, x = "cluster", y = feature, 
+                color = "cluster",         # Outline color by cluster
+                fill = "white",            # White fill for no middle color
+                palette = custom_colors,   # Use custom colors
+                add = "jitter",            # Add jittered points
+                alpha = 1) +               # Opaque outline
+    geom_segment(data = medians, aes(x = as.numeric(cluster) - 0.4, 
+                                     xend = as.numeric(cluster) + 0.4, 
+                                     y = median_value, 
+                                     yend = median_value),
+                 color = "black", size = 0.8) +  # Add a black line for the median
+    stat_compare_means(comparisons = list(c("IF", "ALSBP"), c("IF", "EM"), c("ALSBP", "EM")),
+                       label = "p.format",    # Use p.format for exact p-values
+                       method = "wilcox.test") +
+    labs(x = " ", y = original_feature) +  # Label only the axes, no title
+    theme(
+      legend.position = "none",                  # Hide legend if not needed
+      axis.title.y = element_text(size =11)      # Smaller font size for y-axis label (metabolite name)
+    )
+  
+  # Add plot to list
+  plots[[i]] <- p
+}
+
+# Arrange all plots in a grid
+ggarrange(plotlist = plots, ncol = 3, nrow = ceiling(length(plots) / 3))
+
+```
+
+
+
+```{r}
+# Load necessary libraries
+library(ggplot2)
+library(reshape2)
+library(pheatmap)
+
+
+data <- read.csv("C:/Users/hhuneau/OneDrive - Emory University/Desktop/NRSG 736/Butanoate untransformed.csv", check.names = FALSE)
+
+
+# Remove 'ID' column and calculate the mean for each metabolite within each cluster
+data_grouped <- aggregate(. ~ cluster, data = data[,-1], FUN = mean)
+
+# Set the row names to be clusters and remove the cluster column for heatmap
+rownames(data_grouped) <- data_grouped$cluster
+data_grouped$cluster <- NULL
+
+# Scale data to have a mean of 0 and standard deviation of 1
+data_grouped_scaled <- scale(data_grouped)
+
+# Transpose the data to make the heatmap vertical
+data_grouped_scaled <- t(data_grouped_scaled)
+
+# Set the color scale to span -1 to +1
+breaks <- seq(-1, 1, length.out = 100)
+
+# Plot the heatmap with vertical layout and no angled column names
+pheatmap(data_grouped_scaled, 
+         color = colorRampPalette(c("darkblue", "white", "red"))(100),
+         breaks = breaks,
+         clustering_distance_rows = "euclidean",
+         clustering_distance_cols = "euclidean",
+         clustering_method = "complete",
+         main = " ",
+         border_color = NA,
+         angle_col = 0,               # No angle for column names
+         fontsize_row = 12,           # Font size for row labels
+         fontsize_col = 10,           # Font size for column labels
+         cellwidth = 60,              # Cell width
+         cellheight = 60,             # Cell height
+         display_numbers = FALSE,     # Remove display numbers if not needed
+         margins = c(12, 12)          # Margins for space around labels
+)
+
+```
+
+```{r}
+# Load necessary libraries
+library(ggpubr)
+library(readr)
+
+
+data <- read.csv("C:/Users/hhuneau/OneDrive - Emory University/Desktop/NRSG 736/Butanoate untransformed.csv", check.names = FALSE)
+
+# Keep a list of original feature names (excluding ID and cluster columns)
+original_feature_names <- names(data)[3:ncol(data)]
+
+# Clean the data by renaming columns to be syntactically valid
+cleaned_data <- data %>%
+  rename_with(~ make.names(.))
+
+# Convert the 'cluster' variable to a factor with the desired order
+cleaned_data$cluster <- factor(cleaned_data$cluster, levels = c("IF", "ALSBP", "EM"))
+
+
+# List of cleaned metabolite feature names
+cleaned_feature_names <- names(cleaned_data)[3:ncol(cleaned_data)]
+
+# Define custom colors for clusters
+custom_colors <- c("IF" = "#FFA500", "ALSBP" = "#1E90FF", "EM" = "#228B22")
+
+# Store plots in a list
+plots <- list()
+
+# Loop over each metabolite feature to generate violin plots with extended median lines
+for (i in seq_along(cleaned_feature_names)) {
+  feature <- cleaned_feature_names[i]
+  original_feature <- original_feature_names[i]
+  
+  # Calculate medians for each cluster
+  medians <- cleaned_data %>%
+    group_by(cluster) %>%
+    dplyr::summarize(median_value = median(.data[[feature]], na.rm = TRUE))
+  
+  # Generate the violin plot with pairwise comparison p-values and extended median lines
+  p <- ggviolin(cleaned_data, x = "cluster", y = feature, 
+                color = "cluster",         # Outline color by cluster
+                fill = "white",            # White fill for no middle color
+                palette = custom_colors,   # Use custom colors
+                add = "jitter",            # Add jittered points
+                alpha = 1) +               # Opaque outline
+    geom_segment(data = medians, aes(x = as.numeric(cluster) - 0.4, 
+                                     xend = as.numeric(cluster) + 0.4, 
+                                     y = median_value, 
+                                     yend = median_value),
+                 color = "black", size = 0.8) +  # Add a black line for the median
+    stat_compare_means(comparisons = list(c("IF", "ALSBP"), c("IF", "EM"), c("ALSBP", "EM")),
+                       label = "p.format",    # Use p.format for exact p-values
+                       method = "wilcox.test") +
+    labs(x = " ", y = original_feature) +  # Label only the axes, no title
+    theme(
+      legend.position = "none",                  # Hide legend if not needed
+      axis.title.y = element_text(size =11)      # Smaller font size for y-axis label (metabolite name)
+    )
+  
+  # Add plot to list
+  plots[[i]] <- p
+}
+
+# Arrange all plots in a grid
+ggarrange(plotlist = plots, ncol = 3, nrow = ceiling(length(plots) / 3))
+
+```
+
+
+```{r}
+# Load necessary libraries
+library(ggplot2)
+library(reshape2)
+library(pheatmap)
+
+# Load the data
+
+
+data <- read.csv("C:/Users/hhuneau/OneDrive - Emory University/Desktop/NRSG 736/Propanoate untransformed.csv", check.names = FALSE) 
+
+
+# Remove 'ID' column and calculate the mean for each metabolite within each cluster
+data_grouped <- aggregate(. ~ cluster, data = data[,-1], FUN = mean)
+
+# Set the row names to be clusters and remove the cluster column for heatmap
+rownames(data_grouped) <- data_grouped$cluster
+data_grouped$cluster <- NULL
+
+# Scale data to have a mean of 0 and standard deviation of 1
+data_grouped_scaled <- scale(data_grouped)
+
+# Transpose the data to make the heatmap vertical
+data_grouped_scaled <- t(data_grouped_scaled)
+
+# Set the color scale to span -1 to +1
+breaks <- seq(-1, 1, length.out = 100)
+
+# Plot the heatmap with vertical layout and no angled column names
+pheatmap(data_grouped_scaled, 
+         color = colorRampPalette(c("darkblue", "white", "red"))(100),
+         breaks = breaks,
+         clustering_distance_rows = "euclidean",
+         clustering_distance_cols = "euclidean",
+         clustering_method = "complete",
+         main = " ",
+         border_color = NA,
+         angle_col = 0,               # No angle for column names
+         fontsize_row = 12,           # Font size for row labels
+         fontsize_col = 10,           # Font size for column labels
+         cellwidth = 60,              # Cell width
+         cellheight = 60,             # Cell height
+         display_numbers = FALSE,     # Remove display numbers if not needed
+         margins = c(12, 12)          # Margins for space around labels
+)
+```
+
+```{r}
+# Load necessary libraries
+library(ggpubr)
+library(readr)
+
+
+data <- read.csv("C:/Users/hhuneau/OneDrive - Emory University/Desktop/NRSG 736/Propanoate untransformed.csv", check.names = FALSE)
+
+
+# Keep a list of original feature names (excluding ID and cluster columns)
+original_feature_names <- names(data)[3:ncol(data)]
+
+# Clean the data by renaming columns to be syntactically valid
+cleaned_data <- data %>%
+  rename_with(~ make.names(.))
+
+# Convert the 'cluster' variable to a factor with the desired order
+cleaned_data$cluster <- factor(cleaned_data$cluster, levels = c("IF", "ALSBP", "EM"))
+
+
+# List of cleaned metabolite feature names
+cleaned_feature_names <- names(cleaned_data)[3:ncol(cleaned_data)]
+
+# Define custom colors for clusters
+custom_colors <- c("IF" = "#FFA500", "ALSBP" = "#1E90FF", "EM" = "#228B22")
+
+# Store plots in a list
+plots <- list()
+
+# Loop over each metabolite feature to generate violin plots with extended median lines
+for (i in seq_along(cleaned_feature_names)) {
+  feature <- cleaned_feature_names[i]
+  original_feature <- original_feature_names[i]
+  
+  # Calculate medians for each cluster
+  medians <- cleaned_data %>%
+    group_by(cluster) %>%
+    dplyr::summarize(median_value = median(.data[[feature]], na.rm = TRUE))
+  
+  # Generate the violin plot with pairwise comparison p-values and extended median lines
+  p <- ggviolin(cleaned_data, x = "cluster", y = feature, 
+                color = "cluster",         # Outline color by cluster
+                fill = "white",            # White fill for no middle color
+                palette = custom_colors,   # Use custom colors
+                add = "jitter",            # Add jittered points
+                alpha = 1) +               # Opaque outline
+    geom_segment(data = medians, aes(x = as.numeric(cluster) - 0.4, 
+                                     xend = as.numeric(cluster) + 0.4, 
+                                     y = median_value, 
+                                     yend = median_value),
+                 color = "black", size = 0.8) +  # Add a black line for the median
+    stat_compare_means(comparisons = list(c("IF", "ALSBP"), c("IF", "EM"), c("ALSBP", "EM")),
+                       label = "p.format",    # Use p.format for exact p-values
+                       method = "wilcox.test") +
+    labs(x = " ", y = original_feature) +  # Label only the axes, no title
+    theme(
+      legend.position = "none",                  # Hide legend if not needed
+      axis.title.y = element_text(size =11)      # Smaller font size for y-axis label (metabolite name)
+    )
+  
+  # Add plot to list
+  plots[[i]] <- p
+}
+
+# Arrange all plots in a grid
+ggarrange(plotlist = plots, ncol = 3, nrow = ceiling(length(plots) / 3))
+
+```
+
+
+
+```{r}
+
+### code from Chih-Yu
+library(ggplot2)
+library(reshape2)
+library(pheatmap)
+
+data <- read.csv("C:/Users/hhuneau/OneDrive - Emory University/Desktop/NRSG 736/EM vs ALSBP UNTRANSFORMED.csv", check.names = FALSE)
+ 
+# Save the original column order (excluding 'ID' and 'cluster')
+original_order <- colnames(data)[-c(1, 2)]
+data_grouped_scaled <- scale(data[,-c(1:2)])
+ 
+data<-cbind(data[,c(1:2)], data_grouped_scaled)
+ 
+# Remove 'ID' column and calculate the mean for each metabolite within each cluster
+data_grouped <- aggregate(. ~ cluster, data = data[,-1], FUN = mean)
+# Set the row names to be clusters and remove the cluster column for heatmap
+rownames(data_grouped) <- data_grouped$cluster
+data_grouped$cluster <- NULL
+# Reorder columns in data_grouped to match the original order
+data_grouped <- data_grouped[, original_order]
+ 
+
+# Set the color scale to span -1 to +1
+breaks <- seq(-0.3, 0.3, length.out = 100)  ##### you might need to run range() to know the appropriate range, here is -0.3 to 0.3
+# Plot the heatmap with adjusted legend range
+pheatmap(t(data_grouped),          # Transpose data for vertical orientation
+         color = colorRampPalette(c("darkblue", "white", "red"))(100),
+         breaks = breaks,
+         cluster_rows = FALSE,            # Keep original order for metabolites
+         clustering_distance_cols = "euclidean",
+         clustering_method = "complete",
+         main = " ",
+         border_color = NA,
+         fontsize_row = 12,               # Adjust font size for row labels
+         fontsize_col = 10,               # Adjust font size for column labels
+         cellwidth = 50,                  # Increase cell width for better readability
+         cellheight = 40,                 # Increase cell height for better readability
+         display_numbers = FALSE,         # Remove display numbers if not needed
+         legend = TRUE,                   # Ensure the legend is included
+         legend_labels = "Scaled Value",  # Label for the legend title if needed
+         margins = c(12, 12)              # Increase margins for space around labels
+)
+```
+
+
+
+
+
+
+```{r}
+# Load necessary libraries
+library(ggpubr)
+library(readr)
+library(dplyr)
+
+# Load the data
+
+data <- read.csv("C:/Users/hhuneau/OneDrive - Emory University/Desktop/NRSG 736/EM vs ALSBP UNTRANSFORMED.csv", check.names = FALSE)
+
+# Keep a list of original feature names (excluding ID and cluster columns)
+original_feature_names <- names(data)[3:ncol(data)]
+
+# Clean the data by renaming columns to be syntactically valid
+cleaned_data <- data %>%
+  rename_with(~ make.names(.))
+
+# Convert the 'cluster' variable to a factor with the desired order (ALSBP and EM only)
+cleaned_data <- cleaned_data %>% filter(cluster %in% c("ALSBP", "EM"))
+cleaned_data$cluster <- factor(cleaned_data$cluster, levels = c("ALSBP", "EM"))
+
+# List of cleaned metabolite feature names
+cleaned_feature_names <- names(cleaned_data)[3:ncol(cleaned_data)]
+
+# Define custom colors for clusters
+custom_colors <- c("ALSBP" = "#1E90FF", "EM" = "#228B22")
+
+# Store plots in a list
+plots <- list()
+
+# Loop over each metabolite feature to generate violin plots with Wilcoxon test p-values
+for (i in seq_along(cleaned_feature_names)) {
+  feature <- cleaned_feature_names[i]
+  original_feature <- original_feature_names[i]
+  
+  # Calculate the p-value using the Wilcoxon test
+  wilcox_result <- wilcox.test(cleaned_data[[feature]] ~ cleaned_data$cluster)
+  p_value <- wilcox_result$p.value
+  p_label <- paste("p =", format.pval(p_value, digits = 2, eps = 0.001))  # Format p-value
+  
+  # Calculate medians for each cluster
+  medians <- cleaned_data %>%
+    group_by(cluster) %>%
+    dplyr::summarize(median_value = median(.data[[feature]], na.rm = TRUE))
+  
+  # Generate the violin plot with median line
+  p <- ggviolin(cleaned_data, x = "cluster", y = feature, 
+                color = "cluster",         # Outline color by cluster
+                fill = "white",            # Transparent fill
+                palette = custom_colors,   # Use custom colors for outlines
+                add = "jitter",            # Add jittered points
+                alpha = 1) +               # Opaque outline
+    geom_segment(data = medians, aes(x = as.numeric(cluster) - 0.4, 
+                                     xend = as.numeric(cluster) + 0.4, 
+                                     y = median_value, 
+                                     yend = median_value),
+                 inherit.aes = FALSE, color = "black", size = 0.8) +  # Add median line
+    labs(x = " ", y = original_feature) +    # Label only the axes, no title
+    theme(
+      legend.position = "none",                  # Hide legend if not needed
+      axis.title.y = element_text(size = 11)      # Smaller font size for y-axis label (metabolite name)
+    ) +
+    annotate("text", x = 1.5, y = max(cleaned_data[[feature]], na.rm = TRUE) + 0.2, 
+             label = p_label, size = 5, hjust = 0.5)  # Add p-value manually
+  
+  # Add plot to list
+  plots[[i]] <- p
+}
+
+# Split the plots into two groups of up to 6 plots each
+plots_group_1 <- plots[1:min(6, length(plots))]
+plots_group_2 <- plots[(min(6, length(plots)) + 1):length(plots)]
+
+# Arrange each group of plots in a separate grid
+grid_1 <- ggarrange(plotlist = plots_group_1, ncol = 3, nrow = 2)
+grid_2 <- ggarrange(plotlist = plots_group_2, ncol = 3, nrow = 2)
+
+# Display the two grids
+print(grid_1)
+print(grid_2)
+
+```
+
+
+
+```{r}
+
+data <- read.csv("C:/Users/hhuneau/OneDrive - Emory University/Desktop/NRSG 736/EM vs IF untransformed.csv", check.names = FALSE)
+
+# Scale the data
+data_grouped_scaled <- scale(data[, -c(1:2)])
+# Cap extreme values for visualization
+#data_grouped_scaled[data_grouped_scaled > 3] <- 3
+#data_grouped_scaled[data_grouped_scaled < -3] <- -3
+# Add back ID and cluster
+data <- cbind(data[, c(1:2)], data_grouped_scaled)
+# Remove 'ID' column and calculate the mean for each metabolite within each cluster
+data_grouped <- aggregate(. ~ cluster, data = data[, -1], FUN = mean)
+# Set the row names to be clusters and remove the cluster column for heatmap
+rownames(data_grouped) <- data_grouped$cluster
+data_grouped$cluster <- NULL
+# Reorder columns in data_grouped to match the original order
+data_grouped <- data_grouped[, original_order]
+# Dynamically calculate breaks
+break_min <- min(data_grouped, na.rm = TRUE)-0.2
+break_max <- max(data_grouped, na.rm = TRUE)+0.2
+breaks <- seq(break_min, break_max, length.out = 100)
+# Improve color scale for better distinction
+pheatmap(
+  t(data_grouped),                                  # Transpose data for vertical orientation
+  color = colorRampPalette(c("darkblue", "white", "red"))(100),  # More color granularity
+  breaks = breaks,
+  cluster_rows = FALSE,                            # Keep original order for metabolites
+  clustering_distance_cols = "euclidean",
+  clustering_method = "complete",
+  main = "Heatmap of Scaled Metabolites",
+  border_color = NA,
+  fontsize_row = 12,                               # Adjust font size for row labels
+  fontsize_col = 10,                               # Adjust font size for column labels
+  cellwidth = 50,                                  # Increase cell width for better readability
+  cellheight = 40,                                 # Increase cell height for better readability
+  display_numbers = FALSE,                         # Remove display numbers if not needed
+  legend = TRUE,                                   # Ensure the legend is included
+  scale = "none",                                  # Avoid double-scaling
+  legend_breaks = seq(-0.4, 0.8, 0.2),                   # Explicitly define legend breaks
+  margins = c(12, 12)                              # Increase margins for space around labels
+)
+```
+
+
+
+
+
+```{r}
+# Load the dataset
+data <- read.csv("C:/Users/hhuneau/OneDrive - Emory University/Desktop/NRSG 736/EM vs IF untransformed.csv", check.names = FALSE)
+
+# Get the range (min and max) for each metabolite
+metabolite_ranges <- data[, 3:ncol(data)] %>% 
+  summarise(across(everything(), ~ c(min(.x, na.rm = TRUE), max(.x, na.rm = TRUE)), .names = "{col}_range")) %>%
+  t()  # Transpose for better readability
+
+# Convert to a data frame
+metabolite_ranges_df <- as.data.frame(metabolite_ranges)
+colnames(metabolite_ranges_df) <- c("Min", "Max")  # Rename columns for clarity
+
+# Add row names (metabolite names)
+metabolite_ranges_df$Metabolite <- rownames(metabolite_ranges_df)
+rownames(metabolite_ranges_df) <- NULL
+
+# View or save the results
+print(metabolite_ranges_df)
+
+# Optionally, write the results to a CSV file
+#write.csv(metabolite_ranges_df, "metabolite_ranges.csv", row.names = FALSE)
+```
+
+
+
+
+
+
+
+```{r}
+library(ggpubr)
+library(readr)
+library(dplyr)
+
+# Load the data
+data <- read.csv("C:/Users/hhuneau/OneDrive - Emory University/Desktop/NRSG 736/EM vs IF untransformed.csv", check.names = FALSE)
+
+# Keep a list of original feature names (excluding ID and cluster columns)
+original_feature_names <- names(data)[3:ncol(data)]
+
+# Clean the data by renaming columns to be syntactically valid
+cleaned_data <- data %>%
+  rename_with(~ make.names(.))
+
+# Convert the 'cluster' variable to a factor with the desired order (IF and EM only)
+cleaned_data <- cleaned_data %>% filter(cluster %in% c("IF", "EM"))
+cleaned_data$cluster <- factor(cleaned_data$cluster, levels = c("IF", "EM"))
+
+# List of cleaned metabolite feature names
+cleaned_feature_names <- names(cleaned_data)[3:ncol(cleaned_data)]
+
+# Define custom colors for clusters
+custom_colors <- c("IF" = "#FFA500", "EM" = "#228B22")
+
+# Store plots in a list
+plots <- list()
+
+# Loop over each metabolite feature to generate violin plots with p-values (Wilcoxon test) and median lines
+for (i in seq_along(cleaned_feature_names)) {
+  feature <- cleaned_feature_names[i]
+  original_feature <- original_feature_names[i]
+  
+  # Calculate the p-value using the Wilcoxon test
+  wilcox_result <- wilcox.test(cleaned_data[[feature]] ~ cleaned_data$cluster)
+  p_value <- wilcox_result$p.value
+  p_label <- paste("p =", format.pval(p_value, digits = 3, eps = 0.001))  # Format p-value
+  
+  # Calculate medians for each cluster
+  medians <- cleaned_data %>%
+    group_by(cluster) %>%
+    dplyr::summarize(median_value = median(.data[[feature]], na.rm = TRUE))
+  
+  # Generate the violin plot with median line
+  p <- ggviolin(cleaned_data, x = "cluster", y = feature, 
+                color = "cluster",         # Outline color by cluster
+                fill = "white",            # Transparent fill
+                palette = custom_colors,   # Use custom colors for outlines
+                add = "jitter",            # Add jittered points
+                alpha = 1) +               # Opaque outline
+    geom_segment(data = medians, aes(x = as.numeric(cluster) - 0.4, 
+                                     xend = as.numeric(cluster) + 0.4, 
+                                     y = median_value, 
+                                     yend = median_value),
+                 inherit.aes = FALSE, color = "black", size = 0.8) +  # Add median line
+    labs(x = " ", y = original_feature) +    # Label only the axes, no title
+    theme(
+      legend.position = "none",                  # Hide legend if not needed
+      axis.title.y = element_text(size = 11)      # Smaller font size for y-axis label (metabolite name)
+    ) +
+    annotate("text", x = 1.5, y = max(cleaned_data[[feature]], na.rm = TRUE) + 0.2, 
+             label = p_label, size = 5, hjust = 0.5)  # Add p-value manually
+  
+  # Add plot to list
+  plots[[i]] <- p
+}
+
+# Split the plots into two groups of up to 6 plots each
+plots_group_1 <- plots[1:min(6, length(plots))]
+plots_group_2 <- plots[(min(6, length(plots)) + 1):length(plots)]
+
+# Arrange each group of plots in a separate grid
+grid_1 <- ggarrange(plotlist = plots_group_1, ncol = 3, nrow = 2)
+grid_2 <- ggarrange(plotlist = plots_group_2, ncol = 3, nrow = 2)
+
+# Display the two grids
+print(grid_1)
+print(grid_2)
+
+
+```
+
+
+
+```{r}
+library(ggplot2)
+library(reshape2)
+library(pheatmap)
+
+# Load the data
+
+
+data <- read.csv("C:/Users/hhuneau/OneDrive - Emory University/Desktop/NRSG 736/IF vs ALSBP untransformed.csv", check.names = FALSE) 
+
+
+original_order <- colnames(data)[-c(1, 2)]
+data_grouped_scaled <- scale(data[,-c(1:2)])
+ 
+data<-cbind(data[,c(1:2)], data_grouped_scaled)
+ 
+# Remove 'ID' column and calculate the mean for each metabolite within each cluster
+data_grouped <- aggregate(. ~ cluster, data = data[,-1], FUN = mean)
+# Set the row names to be clusters and remove the cluster column for heatmap
+rownames(data_grouped) <- data_grouped$cluster
+data_grouped$cluster <- NULL
+# Reorder columns in data_grouped to match the original order
+data_grouped <- data_grouped[, original_order]
+ 
+
+# Set the color scale to span -1 to +1
+breaks <- seq(-0.3, 0.6, length.out = 100)  ##### you might need to run range() to know the appropriate range, here is -0.3 to 0.3
+# Plot the heatmap with adjusted legend range
+pheatmap(t(data_grouped),          # Transpose data for vertical orientation
+         color = colorRampPalette(c("darkblue", "white", "red"))(100),
+         breaks = breaks,
+         cluster_rows = FALSE,            # Keep original order for metabolites
+         clustering_distance_cols = "euclidean",
+         clustering_method = "complete",
+         main = " ",
+         border_color = NA,
+         fontsize_row = 12,               # Adjust font size for row labels
+         fontsize_col = 10,               # Adjust font size for column labels
+         cellwidth = 50,                  # Increase cell width for better readability
+         cellheight = 40,                 # Increase cell height for better readability
+         display_numbers = FALSE,         # Remove display numbers if not needed
+         legend = TRUE,                   # Ensure the legend is included
+         legend_labels = "Scaled Value",  # Label for the legend title if needed
+         margins = c(12, 12)              # Increase margins for space around labels
+)
+
+# Check the scaled values for Valine M-H
+valine_scaled_values <- data_grouped_scaled[, "Valine M-H"]
+range(valine_scaled_values)
+print(valine_scaled_values)
+
+```
+
+
+
+
+```{r}
+library(ggpubr)
+library(readr)
+library(dplyr)
+
+# Load the data
+data <- read.csv("C:/Users/hhuneau/OneDrive - Emory University/Desktop/NRSG 736/IF vs ALSBP untransformed.csv", check.names = FALSE)
+
+# Keep a list of original feature names (excluding ID and cluster columns)
+original_feature_names <- names(data)[3:ncol(data)]
+
+# Clean the data by renaming columns to be syntactically valid
+cleaned_data <- data %>%
+  rename_with(~ make.names(.))
+
+# Convert the 'cluster' variable to a factor with the desired order (IF and ALSBP only)
+cleaned_data <- cleaned_data %>% filter(cluster %in% c("IF", "ALSBP"))
+cleaned_data$cluster <- factor(cleaned_data$cluster, levels = c("IF", "ALSBP"))
+
+# List of cleaned metabolite feature names
+cleaned_feature_names <- names(cleaned_data)[3:ncol(cleaned_data)]
+
+# Define custom colors for clusters
+custom_colors <- c("IF" = "#FFA500", "ALSBP" = "#1E90FF")
+
+# Store plots in a list
+plots <- list()
+
+# Loop over each metabolite feature to generate violin plots with p-values (Wilcoxon test) and median lines
+for (i in seq_along(cleaned_feature_names)) {
+  feature <- cleaned_feature_names[i]
+  original_feature <- original_feature_names[i]
+  
+  # Calculate the p-value using the Wilcoxon test
+  wilcox_result <- wilcox.test(cleaned_data[[feature]] ~ cleaned_data$cluster)
+  p_value <- wilcox_result$p.value
+  p_label <- paste("p =", format.pval(p_value, digits = 3, eps = 0.001))  # Format p-value
+  
+  # Calculate medians for each cluster
+  medians <- cleaned_data %>%
+    group_by(cluster) %>%
+    dplyr::summarize(median_value = median(.data[[feature]], na.rm = TRUE))
+  
+  # Generate the violin plot with median line
+  p <- ggviolin(cleaned_data, x = "cluster", y = feature, 
+                color = "cluster",         # Outline color by cluster
+                fill = "white",            # Transparent fill
+                palette = custom_colors,   # Use custom colors for outlines
+                add = "jitter",            # Add jittered points
+                alpha = 1) +               # Opaque outline
+    geom_segment(data = medians, aes(x = as.numeric(cluster) - 0.4, 
+                                     xend = as.numeric(cluster) + 0.4, 
+                                     y = median_value, 
+                                     yend = median_value),
+                 inherit.aes = FALSE, color = "black", size = 0.8) +  # Add median line
+    labs(x = " ", y = original_feature) +    # Label only the axes, no title
+    theme(
+      legend.position = "none",                  # Hide legend if not needed
+      axis.title.y = element_text(size = 11)      # Smaller font size for y-axis label (metabolite name)
+    ) +
+    annotate("text", x = 1.5, y = max(cleaned_data[[feature]], na.rm = TRUE) + 0.2, 
+             label = p_label, size = 5, hjust = 0.5)  # Add p-value manually
+  
+  # Add plot to list
+  plots[[i]] <- p
+}
+
+# Split the plots into two groups of up to 6 plots each
+plots_group_1 <- plots[1:min(6, length(plots))]
+plots_group_2 <- plots[(min(6, length(plots)) + 1):length(plots)]
+
+# Arrange each group of plots in a separate grid
+grid_1 <- ggarrange(plotlist = plots_group_1, ncol = 3, nrow = 2)
+grid_2 <- ggarrange(plotlist = plots_group_2, ncol = 3, nrow = 2)
+
+# Display the two grids
+print(grid_1)
+print(grid_2)
+
+
+
+```
+
+
