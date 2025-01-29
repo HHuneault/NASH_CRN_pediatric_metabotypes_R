@@ -134,8 +134,8 @@ dplyr::select(AGE,BMI, BMIZ, bmip,
 
 # Function to remove outliers from a single column and track removed IDs
 remove_outliers <- function(data, column) {
-  mean_value <- mean(data[[column]], na.rm = TRUE)  # Calculate mean, ignoring NA
-  sd_value <- sd(data[[column]], na.rm = TRUE)      # Calculate standard deviation, ignoring NA
+  mean_value <- mean(data[[column]], na.rm = TRUE)  
+  sd_value <- sd(data[[column]], na.rm = TRUE)     
   # Calculate limits
   lower_bound <- mean_value - 5 * sd_value
   upper_bound <- mean_value + 5 * sd_value
@@ -147,7 +147,6 @@ remove_outliers <- function(data, column) {
   return(list(data = data, removed_ids = removed_ids))
 }
 
-# 31 outliers removed
 
 # Initialize a vector to store all removed IDs
 all_removed_ids <- c()
@@ -164,8 +163,6 @@ for (variable in names(completed_data)) {
 # Display the removed IDs
 removed_ids_unique <- unique(all_removed_ids)
 print(removed_ids_unique)
-
-#removed 44 participants
 
 
 
@@ -234,7 +231,7 @@ corrplot(correlation_matrix, method = "circle")
 total_participants <- nrow(metabotypes)
 
 # Count the number of Hispanic participants
-hispanic_count <- sum(metabotypes$HISPANIC == 1, na.rm = TRUE) # Assume the column 'Ethnicity' indicates ethnicity
+hispanic_count <- sum(metabotypes$HISPANIC == 1, na.rm = TRUE) 
 
 # Calculate the percentage of Hispanic participants
 hispanic_percentage <- (hispanic_count / total_participants) * 100
@@ -246,7 +243,7 @@ cat("Percentage of Hispanic participants:", hispanic_percentage, "%\n")
 ```
 
 ```{r}
-# Assuming the dataset is named 'metabotypes' and is already loaded into your R environment
+
 metabotypes$Adv_fibrosis <- ifelse(metabotypes$Baseline.Fibrosis.score...scale.0.4 >= 3, 1, 0)
 metabotypes$Adv_fibrosis
 
@@ -260,7 +257,6 @@ check_normality <- function(data) {
   # Select only numeric columns
   numeric_columns <- data %>% select_if(is.numeric)
   
-  # Apply Shapiro-Wilk test to each column
   normality_results <- lapply(numeric_columns, function(column) {
     shapiro.test(column)
   })
@@ -337,9 +333,9 @@ custom_test <- function(data, variable, by, ...) {
   # Check if Fisher's exact test is needed
   if (any(tbl < 5)) {
     test <- tryCatch(
-      fisher.test(tbl, workspace = 2e5, simulate.p.value = TRUE),  # Increase workspace
+      fisher.test(tbl, workspace = 2e5, simulate.p.value = TRUE),  
       error = function(e) {
-        list(p.value = NA)  # Return NA if Fisher's exact test fails
+        list(p.value = NA)  
       }
     )
   } else {
@@ -391,8 +387,8 @@ Tab1 <- metabotypes %>%
   ) %>%
   add_p(
     test = list(
-      all_categorical() ~ custom_test,  # Use the custom test function for categorical variables
-      all_continuous() ~ "kruskal.test"  # Use Kruskal-Wallis for continuous variables
+      all_categorical() ~ custom_test, 
+      all_continuous() ~ "kruskal.test"  
     )
   ) %>%
   modify_table_styling(
@@ -664,7 +660,7 @@ library(caret)
 # Check for multicollinearity
 library(caret)
 cor_matrix <- cor(metabotypesScaleCC_scaled)
-highly_correlated <- findCorrelation(cor_matrix, cutoff = 0.9) # Example cutoff, adjust as needed
+highly_correlated <- findCorrelation(cor_matrix, cutoff = 0.9) 
 metabotypesScaleCC_reduced <- metabotypesScaleCC_scaled[, -highly_correlated]
 
 # Running NbClust after reducing multicollinearity
@@ -720,7 +716,7 @@ merged_datacheck <- merged_data %>%
 ## adding p-values
 library(ggplot2)
 library(RColorBrewer)
-library(ggpubr)  # Load ggpubr for statistical annotations
+library(ggpubr)  
 
 
 
@@ -739,17 +735,16 @@ for (variable in numeric_variables) {
       labs(title = paste("Boxplot of", variable, "by Cluster"), x = "Cluster", y = variable) +
       theme_minimal() +
       scale_fill_manual(values = my_colors) +  # Using the manually defined colors
-      stat_compare_means(comparisons = list(c("1", "2"), c("1", "3"), c("2", "3")),  # Adjust these comparisons as needed for your number of clusters
+      stat_compare_means(comparisons = list(c("1", "2"), c("1", "3"), c("2", "3")),  
                          method = "t.test",  # Using t-test for comparison, change as per your statistical requirement
                          label = "p.signif")  # Shows significance levels
 
-    print(p)  # Print the plot
+    print(p) 
   }
 }
 
 
 
-library(ggpubr)  # For stat_compare_means
 
 my_colors <- RColorBrewer::brewer.pal(3, "Set3")
 
@@ -763,9 +758,9 @@ for (variable in numeric_variables) {
       labs(title = paste("Boxplot of", variable, "by Cluster"), x = "Cluster", y = variable) +
       theme_minimal() +
       scale_fill_manual(values = my_colors) +  # Using the manually defined colors
-      stat_compare_means(comparisons = list(c("1", "2"), c("1", "3"), c("2", "3")),  # Adjust these comparisons as needed for your number of clusters
-                         method = "wilcox.test",  # Using Wilcoxon test (Mann-Whitney U test) for nonparametric comparison
-                         label = "p.signif")  # Shows significance levels
+      stat_compare_means(comparisons = list(c("1", "2"), c("1", "3"), c("2", "3")),  
+                         method = "wilcox.test",  
+                         label = "p.signif")  
 
     print(p)  
   }
@@ -816,7 +811,7 @@ custom_test <- function(data, variable, by, ...) {
   # Check if Fisher's exact test is needed
   if (any(tbl < 5)) {
     test <- tryCatch(
-      fisher.test(tbl, workspace = 2e5, simulate.p.value = TRUE),  # Increase workspace
+      fisher.test(tbl, workspace = 2e5, simulate.p.value = TRUE), 
       error = function(e) {
         list(p.value = NA)  # Return NA if Fisher's exact test fails
       }
@@ -885,13 +880,13 @@ Tab1 <- merged_data %>%
     statistic = list(
       all_continuous() ~ "{median} ({p25}, {p75})"  
     ),
-    missing = "no"  # Don't list missing data separately
+    missing = "no"  
   ) %>%
   bold_labels() %>%
   add_p(
     test = list(
-      all_continuous() ~ kruskal.test,  # Nonparametric test for continuous variables
-      all_categorical() ~ custom_test  # Use custom function for Fisher's exact test or Chi-squared test
+      all_continuous() ~ kruskal.test,  
+      all_categorical() ~ custom_test  
     )
   ) %>%
   bold_p()
@@ -916,7 +911,7 @@ my_colors <- c("Adipo-lipid-SBP" = "royalblue1", "Inflammatory-fibrotic" = "grey
 
 # Create the boxplot
 p <- ggplot(metabotypes_original, aes(x = cluster, y = WC..cm., fill = cluster)) +
-  geom_boxplot(size = 1.5) +  # Increase the size for boldness
+  geom_boxplot(size = 1.5) + 
   labs(title = "Waist Circumference", x = " ", y = "WC (cm)") +
   theme_minimal() +
   scale_fill_manual(values = my_colors) +  # Using the custom defined colors
@@ -962,7 +957,7 @@ my_colors <- c("Adipo-lipid-SBP" = "royalblue1", "Inflammatory-fibrotic" = "grey
 
 # Create the boxplot
 p <- ggplot(metabotypes_original, aes(x = cluster, y = TRIG, fill = cluster)) +
-  geom_boxplot(size = 1.5) +  # Increase the size for boldness
+  geom_boxplot(size = 1.5) +  
   labs(title = "Trig", x = " ", y = "Triglycerides (mg/dL)") +
   theme_minimal() +
   scale_fill_manual(values = my_colors) +  # Using the custom defined colors
@@ -998,24 +993,24 @@ my_colors <- c("Adipo-lipid-SBP" = "royalblue1", "Inflammatory-fibrotic" = "grey
 
 
 p <- ggplot(metabotypes_original, aes(x = cluster, y = VLDL, fill = cluster)) +
-  geom_boxplot(size = 1.5) +  # Increase the size for boldness
+  geom_boxplot(size = 1.5) + 
   labs(title = "Trig", x = " ", y = "VLDL (mg/dL)") +
   theme_minimal() +
-  scale_fill_manual(values = my_colors) +  # Using the custom defined colors
+  scale_fill_manual(values = my_colors) + 
   stat_compare_means(comparisons = list(c("Adipo-lipid-SBP", "Inflammatory-fibrotic"), 
                                         c("Adipo-lipid-SBP", "Early-mild"), 
                                         c("Inflammatory-fibrotic", "Early-mild")),  
                      method = "wilcox.test",  
                         label = "p.signif",
-                     size = 15,  # Make the stars larger
-                     vjust = 0.5) +  # Adjust vertical position of stars
+                     size = 15,  
+                     vjust = 0.5) + 
   theme(
    # plot.title = element_text(hjust = 0.5, size = 20, face = "bold"),
    # axis.title.x = element_text(size = 35, face = "bold"),
     axis.title.y = element_text(size = 45, face = "bold"),
     #axis.text.x = element_text(size = 30, face = "bold"),  
     axis.text.y = element_text(size = 35, face = "bold"),  
-    legend.position = "none"  # Remove the legend
+    legend.position = "none"  
   )
 
 # Print the plot
@@ -1024,22 +1019,22 @@ print(p)
 
 # Create the boxplot
 p <- ggplot(metabotypes_original, aes(x = cluster, y = VLDL, fill = cluster)) +
-  geom_boxplot(size = 1.5) +  # Increase the size for boldness
+  geom_boxplot(size = 1.5) + 
   labs(title = "Trig", x = " ", y = "VLDL (mg/dL)") +
   theme_minimal() +
-  scale_fill_manual(values = my_colors) +  # Using the custom defined colors
+  scale_fill_manual(values = my_colors) +  
   stat_compare_means(comparisons = list(c("Adipo-lipid-SBP", "Inflammatory-fibrotic"), 
                                         c("Adipo-lipid-SBP", "Early-mild"), 
                                         c("Inflammatory-fibrotic", "Early-mild")),  
                      method = "wilcox.test",  # Using Wilcoxon test for comparison
                      label = "p.signif",
-                     size = 15,  # Make the stars larger
-                     vjust = 0.5) +  # Adjust vertical position of stars
+                     size = 15,  
+                     vjust = 0.5) + 
   ylim(0, 120) +  # Set y-axis limits from 0 to 120
   theme(
     axis.title.y = element_text(size = 45, face = "bold"),
     axis.text.y = element_text(size = 35, face = "bold"),  
-    legend.position = "none"  # Remove the legend
+    legend.position = "none" 
   )
 
 # Print the plot
@@ -1049,10 +1044,9 @@ print(p)
 ```
 
 ```{r}
-# Define custom colors for the clusters
+
 my_colors <- c("Adipo-lipid-SBP" = "royalblue1", "Inflammatory-fibrotic" = "grey70", "Early-mild" = "grey50")
 
-# # Reorder and relabel the clusters
 # metabotypes_original$cluster <- factor(metabotypes_original$cluster, 
 #                                        levels = c("2", "1", "3"), 
 #                                        labels = c("Inflammatory-fibrotic", "Adipo-lipid-SBP", "Early-mild"))
@@ -1065,21 +1059,21 @@ p <- ggplot(metabotypes_original, aes(x = cluster, y = SBP, fill = cluster)) +
   geom_boxplot(size = 1.5) + 
   labs(title = "Trig", x = " ", y = "SBP (mmHg)") +
   theme_minimal() +
-  scale_fill_manual(values = my_colors) +  # Using the custom defined colors
+  scale_fill_manual(values = my_colors) +  
   stat_compare_means(comparisons = list(c("Adipo-lipid-SBP", "Inflammatory-fibrotic"), 
                                         c("Adipo-lipid-SBP", "Early-mild"), 
                                         c("Inflammatory-fibrotic", "Early-mild")),  
                      method = "wilcox.test",  
                         label = "p.signif",
-                     size = 15,  # Make the stars larger
-                     vjust = 0.5) +  # Adjust vertical position of stars
+                     size = 15,  
+                     vjust = 0.5) +  
   theme(
    # plot.title = element_text(hjust = 0.5, size = 20, face = "bold"),
    # axis.title.x = element_text(size = 35, face = "bold"),
     axis.title.y = element_text(size = 45, face = "bold"),
     #axis.text.x = element_text(size = 30, face = "bold"), 
     axis.text.y = element_text(size = 35, face = "bold"),  
-    legend.position = "none"  # Remove the legend
+    legend.position = "none" 
   )
 
 print(p)
@@ -1099,14 +1093,14 @@ p <- ggplot(metabotypes_original, aes(x = cluster, y = Uric.acid..mg.dL., fill =
   geom_boxplot(size = 1.5) +  
   labs(title = " ", x = " ", y = "Uric acid (mg/dL)") +
   theme_minimal() +
-  scale_fill_manual(values = my_colors) +  # Using the custom defined colors
+  scale_fill_manual(values = my_colors) +  
   stat_compare_means(comparisons = list(c("Adipo-lipid-SBP", "Inflammatory-fibrotic"), 
                                         c("Adipo-lipid-SBP", "Early-mild"), 
                                         c("Inflammatory-fibrotic", "Early-mild")),  
                      method = "wilcox.test",  
                         label = "p.signif",
-                     size = 15,  # Make the stars larger
-                     vjust = 0.5) +  # Adjust vertical position of stars
+                     size = 15, 
+                     vjust = 0.5) +  
   theme(
    # plot.title = element_text(hjust = 0.5, size = 20, face = "bold"),
    # axis.title.x = element_text(size = 35, face = "bold"),
@@ -1142,7 +1136,7 @@ p <- ggplot(metabotypes_original, aes(x = cluster, y = ALT, fill = cluster)) +
                                         c("Inflammatory-fibrotic", "Early-mild")), 
                      method = "wilcox.test",  
                      label = "p.signif",
-                     size = 15,  # Make the stars larger
+                     size = 15,  
                      vjust = 0.5,
                      hide.ns = TRUE) + 
   theme(
@@ -1205,7 +1199,7 @@ my_colors <- c("Adipo-lipid-SBP" = "grey70", "Inflammatory-fibrotic" = "grey50",
 
 
 p <- ggplot(metabotypes_original, aes(x = cluster, y = AGE, fill = cluster)) +
-  geom_boxplot(size = 1.5) +  # Increase the size for boldness
+  geom_boxplot(size = 1.5) + 
   labs(title = "Age", x = " ", y = "Age (yrs)") +
   theme_minimal() +
   scale_fill_manual(values = my_colors) +  # Using the custom defined colors
@@ -1430,7 +1424,7 @@ bar_chart <- ggplot() +
             aes(xmin = as.numeric(cluster) - 0.35, xmax = as.numeric(cluster) + 0.35, ymin = 0, ymax = 100, color = cluster),
             fill = NA, linetype = "dashed", size = 2.3) +
   labs(title = "Advanced Fibrosis Distribution by Cluster", x = "Cluster", y = "% of Participants with Advanced Fibrosis") +
-  scale_y_continuous(breaks = seq(0, 100, by = 25)) +  # Set y-axis breaks
+  scale_y_continuous(breaks = seq(0, 100, by = 25)) + 
   theme_minimal() +
   scale_fill_manual(values = my_colors) +
   scale_color_manual(values = my_colors) +
