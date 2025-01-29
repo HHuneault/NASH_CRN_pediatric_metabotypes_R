@@ -62,8 +62,6 @@ cat("Number of outliers from PCA for components 1 to 5: ", length(outliers_1_5),
 ```{r}
 # C18 identify outliers based on compents 1-5 
 
-
-# Load the dataset in R
 data <- read.csv("data_normalized_C18_all studies_514_Oct17 _USE_w phenotype label.csv", header = TRUE)
 
 # Separate phenotype labels (cluster) from the data
@@ -115,9 +113,6 @@ cat("Number of outliers from PCA for components 1 to 5: ", length(outliers_1_5),
 
 ## updated with plots using components 1-5 - c18
 
-
-
-# Load the dataset in R
 data <- read.csv("data_normalized_C18_all studies_514_Oct17 _USE_w phenotype label.csv", header = TRUE)
 
 # Separate phenotype labels (cluster) from the data
@@ -163,7 +158,7 @@ cat("Outliers identified from PCA for components 1 to 5: \n")
 print(rownames(transposed_data)[outliers_1_5])  # Sample names
 cat("Number of outliers from PCA for components 1 to 5: ", length(outliers_1_5), "\n")
 
-# ---- Add plots ----
+####################################################
 
 # Set up plotting area for 2x2 layout
 par(mfrow = c(2, 2))
