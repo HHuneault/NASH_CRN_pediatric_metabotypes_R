@@ -5,21 +5,18 @@ editor_options:
   chunk_output_type: console
 ---
 ```{r}
-# Load required libraries
 library(ggplot2)
 
-# Load the data
+
 data <- read.csv("C:/Users/hhuneau/OneDrive - Emory University/Desktop/NRSG 736/top_20_metabolites_correlated_with_fibrosis_C18_NAMED for plot.csv")
 
-
-# Load the data
 #data <- read.csv("C:/Users/hhuneau/OneDrive - Emory University/Desktop/NRSG 736/top_20_metabolites_correlated_with_fibrosis_HILIC_NAMED for plot.csv")
 
 
 # Rename the column if necessary
 colnames(data)[colnames(data) == "X..1.log10.p."] <- "(-1)log10(p)"
 
-# Create the plot
+# Create the plot - run for HILIC
 ggplot(data, aes(x = `(-1)log10(p)`, y = reorder(metabolite, `(-1)log10(p)`), color = correlation)) +
   geom_point(size = 3) +
   scale_color_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
@@ -47,7 +44,7 @@ ggplot(data, aes(x = `(-1)log10(p)`, y = reorder(metabolite, `(-1)log10(p)`), co
 
 ############################################
 
-# Create the plot
+# Create the plot - run for C18
 ggplot(data, aes(x = `(-1)log10(p)`, y = reorder(metabolite, `(-1)log10(p)`), color = correlation)) +
   geom_point(size = 3) +
   scale_color_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
