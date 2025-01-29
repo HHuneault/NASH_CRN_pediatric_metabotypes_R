@@ -15,7 +15,7 @@ library(pcv)
 data <- read.csv("data_normalized_HILIC_all studies_514_Oct17 _USE_w phenotype label.csv", header = TRUE)
 
 # Separate phenotype labels (cluster) from the data
-phenotype_labels <- as.vector(data[1, -1])  # First row contains phenotype labels (IF, EM, ALSP)
+phenotype_labels <- as.vector(data[1, -1])  
 feature_names <- data[-1, 1]  # First column contains feature names (mz_rt)
 
 # Extract the numeric data (excluding the first row for cluster and the first column for mz_rt)
@@ -65,7 +65,7 @@ cat("Number of outliers from PCA for components 1 to 5: ", length(outliers_1_5),
 data <- read.csv("data_normalized_C18_all studies_514_Oct17 _USE_w phenotype label.csv", header = TRUE)
 
 # Separate phenotype labels (cluster) from the data
-phenotype_labels <- as.vector(data[1, -1])  # First row contains phenotype labels (IF, EM, ALSP)
+phenotype_labels <- as.vector(data[1, -1])  
 feature_names <- data[-1, 1]  
 
 # Extract the numeric data (excluding the first row for cluster and the first column for mz_rt)
