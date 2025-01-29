@@ -33,7 +33,7 @@ library(ggplot2)
 
 pathg <- path %>%
   mutate(Pathways = paste0(pathway, " (", overlap_size, "/", pathway_size, ")")) %>%
-  mutate(neglogpvalue = -log10(p.value))  # Correct log scaling
+  mutate(neglogpvalue = -log10(p.value))
 
 
 pathfig <- ggplot(pathg, aes(x = reorder(Pathways, neglogpvalue), y = neglogpvalue, fill = Mode)) +
