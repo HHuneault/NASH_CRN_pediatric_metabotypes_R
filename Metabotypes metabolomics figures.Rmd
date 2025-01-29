@@ -19,7 +19,7 @@ library(reshape2)
 library(pheatmap)
 
 
-data <- read.csv("C:/Users/hhuneau/OneDrive - Emory University/Desktop/NRSG 736/tryptophan untransformed.csv", check.names = FALSE) # Adjust path and sheet if necessary
+data <- read.csv("C:/Users/hhuneau/OneDrive - Emory University/Desktop/NRSG 736/tryptophan untransformed.csv", check.names = FALSE) 
 
 # Remove 'ID' column and calculate the mean for each metabolite within each cluster
 data_grouped <- aggregate(. ~ cluster, data = data[,-1], FUN = mean)
@@ -438,11 +438,11 @@ for (i in seq_along(cleaned_feature_names)) {
   
   # Generate the violin plot with pairwise comparison p-values and extended median lines
   p <- ggviolin(cleaned_data, x = "cluster", y = feature, 
-                color = "cluster",         # Outline color by cluster
-                fill = "white",            # White fill for no middle color
-                palette = custom_colors,   # Use custom colors
-                add = "jitter",            # Add jittered points
-                alpha = 1) +               # Opaque outline
+                color = "cluster",         
+                fill = "white",            
+                palette = custom_colors,   
+                add = "jitter",           
+                alpha = 1) +               
     geom_segment(data = medians, aes(x = as.numeric(cluster) - 0.4, 
                                      xend = as.numeric(cluster) + 0.4, 
                                      y = median_value, 
@@ -765,7 +765,7 @@ for (i in seq_along(cleaned_feature_names)) {
                                      y = median_value, 
                                      yend = median_value),
                  inherit.aes = FALSE, color = "black", size = 0.8) +  
-    labs(x = " ", y = original_feature) +    # Label only the axes, no title
+    labs(x = " ", y = original_feature) +    
     theme(
       legend.position = "none",                 
       axis.title.y = element_text(size = 11)      
@@ -801,18 +801,18 @@ data_grouped_scaled <- scale(data[, -c(1:2)])
 #data_grouped_scaled[data_grouped_scaled < -3] <- -3
 # Add back ID and cluster
 data <- cbind(data[, c(1:2)], data_grouped_scaled)
-# Remove 'ID' column and calculate the mean for each metabolite within each cluster
+
 data_grouped <- aggregate(. ~ cluster, data = data[, -1], FUN = mean)
 # Set the row names to be clusters and remove the cluster column for heatmap
 rownames(data_grouped) <- data_grouped$cluster
 data_grouped$cluster <- NULL
 # Reorder columns in data_grouped to match the original order
 data_grouped <- data_grouped[, original_order]
-# Dynamically calculate breaks
+
 break_min <- min(data_grouped, na.rm = TRUE)-0.2
 break_max <- max(data_grouped, na.rm = TRUE)+0.2
 breaks <- seq(break_min, break_max, length.out = 100)
-# Improve color scale for better distinction
+
 pheatmap(
   t(data_grouped),                                 
   color = colorRampPalette(c("darkblue", "white", "red"))(100), 
@@ -845,10 +845,10 @@ data <- read.csv("C:/Users/hhuneau/OneDrive - Emory University/Desktop/NRSG 736/
 
 metabolite_ranges <- data[, 3:ncol(data)] %>% 
   summarise(across(everything(), ~ c(min(.x, na.rm = TRUE), max(.x, na.rm = TRUE)), .names = "{col}_range")) %>%
-  t()  # Transpose for better readability
+  t() 
 
 metabolite_ranges_df <- as.data.frame(metabolite_ranges)
-colnames(metabolite_ranges_df) <- c("Min", "Max")  # Rename columns for clarity
+colnames(metabolite_ranges_df) <- c("Min", "Max")  
 
 
 metabolite_ranges_df$Metabolite <- rownames(metabolite_ranges_df)
@@ -895,7 +895,7 @@ for (i in seq_along(cleaned_feature_names)) {
   feature <- cleaned_feature_names[i]
   original_feature <- original_feature_names[i]
   
-  # Calculate the p-value using the Wilcoxon test
+
   wilcox_result <- wilcox.test(cleaned_data[[feature]] ~ cleaned_data$cluster)
   p_value <- wilcox_result$p.value
   p_label <- paste("p =", format.pval(p_value, digits = 3, eps = 0.001))  
@@ -928,7 +928,6 @@ for (i in seq_along(cleaned_feature_names)) {
   plots[[i]] <- p
 }
 
-# Split the plots into two groups of up to 6 plots each
 plots_group_1 <- plots[1:min(6, length(plots))]
 plots_group_2 <- plots[(min(6, length(plots)) + 1):length(plots)]
 
@@ -957,10 +956,10 @@ data<-cbind(data[,c(1:2)], data_grouped_scaled)
  
 
 data_grouped <- aggregate(. ~ cluster, data = data[,-1], FUN = mean)
-# Set the row names to be clusters and remove the cluster column for heatmap
+
 rownames(data_grouped) <- data_grouped$cluster
 data_grouped$cluster <- NULL
-# Reorder columns in data_grouped to match the original order
+
 data_grouped <- data_grouped[, original_order]
  
 
@@ -1026,7 +1025,7 @@ for (i in seq_along(cleaned_feature_names)) {
   
   wilcox_result <- wilcox.test(cleaned_data[[feature]] ~ cleaned_data$cluster)
   p_value <- wilcox_result$p.value
-  p_label <- paste("p =", format.pval(p_value, digits = 3, eps = 0.001))  # Format p-value
+  p_label <- paste("p =", format.pval(p_value, digits = 3, eps = 0.001))  
   
 
   medians <- cleaned_data %>%
