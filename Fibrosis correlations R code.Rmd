@@ -13,7 +13,7 @@ data <- read.csv("C:/Users/hhuneau/OneDrive - Emory University/Desktop/NRSG 736/
 #data <- read.csv("C:/Users/hhuneau/OneDrive - Emory University/Desktop/NRSG 736/top_20_metabolites_correlated_with_fibrosis_HILIC_NAMED for plot.csv")
 
 
-# Rename the column if necessary
+
 colnames(data)[colnames(data) == "X..1.log10.p."] <- "(-1)log10(p)"
 
 # Create the plot - run for HILIC
@@ -27,19 +27,19 @@ ggplot(data, aes(x = `(-1)log10(p)`, y = reorder(metabolite, `(-1)log10(p)`), co
   ) +
   theme_minimal(base_size = 12) +
   theme(
-    axis.text.y = element_text(size = 8, color = "black", face = "bold"),  # Make y-axis labels bold and black
+    axis.text.y = element_text(size = 8, color = "black", face = "bold"), 
     axis.title.y = element_text(margin = margin(r = 10)),
     plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
     legend.position = "right",
     legend.title = element_text(size = 10),
     legend.text = element_text(size = 8),
-    panel.border = element_rect(color = "black", fill = NA, size = 1)  # Add border around inner plot
+    panel.border = element_rect(color = "black", fill = NA, size = 1)  
   ) +
   ggtitle("Top 20 Correlations to Fibrosis Score") +
   geom_vline(xintercept = 1.3, linetype = "dashed", color = "grey50") +
   theme(
-    panel.grid.minor = element_line(color = "grey90"),  # Keep minor grid lines
-    panel.grid.major = element_line(color = "grey80")   # Keep major grid lines
+    panel.grid.minor = element_line(color = "grey90"), 
+    panel.grid.major = element_line(color = "grey80")  
   )
 
 ############################################
@@ -55,21 +55,21 @@ ggplot(data, aes(x = `(-1)log10(p)`, y = reorder(metabolite, `(-1)log10(p)`), co
   ) +
   theme_minimal(base_size = 12) +
   theme(
-    axis.text.y = element_text(size = 8, color = "black", face = "bold", hjust = 1),  # Align y-axis labels
+    axis.text.y = element_text(size = 8, color = "black", face = "bold", hjust = 1), 
     axis.title.y = element_text(margin = margin(r = 10)),
     axis.title.x = element_text(margin = margin(t = 10)),
     plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
     legend.position = "right",
     legend.title = element_text(size = 10),
     legend.text = element_text(size = 8),
-    panel.border = element_rect(color = "black", fill = NA, size = 1)  # Add border around inner plot
+    panel.border = element_rect(color = "black", fill = NA, size = 1)  
   ) +
   ggtitle("Top 20 Correlations to Fibrosis Score") +
   geom_vline(xintercept = 1.3, linetype = "dashed", color = "grey50") +
   theme(
-    panel.grid.minor = element_line(color = "grey90"),  # Keep minor grid lines
-    panel.grid.major = element_line(color = "grey80"),  # Keep major grid lines
-    plot.margin = unit(c(1, 1, 1, 1), "cm")            # Add margin for better alignment
+    panel.grid.minor = element_line(color = "grey90"),  
+    panel.grid.major = element_line(color = "grey80"), 
+    plot.margin = unit(c(1, 1, 1, 1), "cm")            
   )
 
 
