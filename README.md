@@ -15,3 +15,4 @@ xMWAS Analysis: This repository does not include R-based xMWAS scripts. Instead,
 Due to data-sharing agreements, the full dataset is not publicly available. However, some clinical and metabolomics data can be accessed at:
 https://www.metabolomicsworkbench.org/ (Study ID: ST001428) 
 https://repository.niddk.nih.gov/home
+This code is released under the MIT License, allowing reuse with attribution. See [LICENSE](LICENSE) for details.
