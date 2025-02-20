@@ -18,7 +18,7 @@ Metabolomics PCA.Rmd – Principal component analysis of metabolomic profiles
 Pathway analysis bar plots_metabotypes.Rmd – Pathway enrichment and visualization of significant metabolites
 Metabotypes metabolomics figures.Rmd – Figures illustrating metabolomic differences across subtypes
 Fibrosis correlations R code.Rmd – Analysis of fibrosis markers and correlation with metabolic features
-xMWAS Analysis: This repository does not include R-based xMWAS scripts. Instead, xMWAS analysis was conducted using the online Shiny app at: https://kuppal.shinyapps.io/xmwas/
+xMWAS Analysis: This repository does not include R-based xMWAS scripts. Instead, xMWAS analysis was conducted using the online xMWAS v0.552​ Shiny app at: https://kuppal.shinyapps.io/xmwas/
 
 Due to data-sharing agreements, the full dataset is not publicly available. However, some clinical and metabolomics data can be accessed at:
 https://www.metabolomicsworkbench.org/ (Study ID: ST001428) 
