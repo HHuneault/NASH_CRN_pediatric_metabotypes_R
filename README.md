@@ -25,3 +25,4 @@ https://www.metabolomicsworkbench.org/ (Study ID: ST001428)
 https://repository.niddk.nih.gov/home
 
 This code is released under the MIT License, allowing reuse with attribution. See [LICENSE](LICENSE) for details.
+Typical installation time on a standard desktop computer is ~3–5 minutes, with expected run times for analyses ranging from ~2–5 minutes per `.Rmd` file in RStudio to generate clustering analysis results, PCA plots, heatmaps, and pathway enrichment bar plots.
